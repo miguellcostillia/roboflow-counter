@@ -18,3 +18,9 @@
 - python -m roboflow_counter.main run-stream --help
 - python -m roboflow_counter.main run-stream
 - python -m roboflow_counter.main run-stream --fps-target 5 rtsp://127.0.0.1:8554/larvacounter
+
+### Workflow Shortcuts
+- `nb feat <titel>` – neuen Feature-Branch mit Zeitpräfix
+- `prup` – push + PR öffnen
+- `finish_branch` – nach Merge aufräumen
+

@@ -96,22 +96,12 @@ Vor jedem größeren Change immer prüfen:
 
 ---
 
-## Arbeits-Checklisten
+## Branch-Hygiene & Sichtbarkeit
 
-- **Session-Start:** Siehe `docs/SESSION_START.md`
-- **Session-Ende:** Siehe `docs/SESSION_END.md`
-- **PR-Workflow:** Pull Requests werden im Browser erstellt und gemerged. Vorlage: `.github/pull_request_template.md`
+- Standard: **Nur `main` + 1 aktiver Feature-Branch** sichtbar.
+- Nach Merge werden Feature-Branches **inaktiv gemacht**:
+  1) Branch-Spitze wird mit Tag `arch/<YYYYMMDD-HHMM>_<branch>` archiviert.
+  2) Remote-Branch wird gelöscht (Übersicht bleibt sauber).
+- Mergen ausschließlich via **Pull Request** im Browser.
+- Ausnahme: mehrere aktive Branches nur, wenn parallel zwingend nötig.
 
-**Grundsatz:** Immer nur `main` + 1 aktiver Feature-Branch. Nach Merge: Branch archivieren & löschen (unsichtbar halten).
-
-
-## Push & Merge Regeln
-- **Nie direkt auf `main` pushen** (lokal blockiert durch Hook).
-- **Befehl:** `prup` → pusht aktuellen Branch und öffnet/erstellt PR.
-- **Nach Merge:** `finish_branch` → main aktualisieren & Feature-Branch löschen.
-- **Wenn User sagt:** „pushen wir das ins main“ → **immer** PR-Workflow verwenden, keine direkten Merges.
-
-### Schutzregeln (lokal)
-- Commits/Pushes auf `main` sind lokal blockiert (Git-Hooks).
-- Workflow: **Feature-Branch → PR → Browser-Merge → finish_branch**.
-- Wenn der User sagt „pushen wir das ins main“, werden **immer** PR-Befehle geliefert (kein Direkt-Merge).

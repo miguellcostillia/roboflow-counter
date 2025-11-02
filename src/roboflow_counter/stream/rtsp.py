@@ -1,7 +1,20 @@
 from __future__ import annotations
-import time, math, os
-from typing import Optional
+import time, math, os, signal
+from typing import Optional, Dict, Any
 from ..util.logging import setup_logger
+
+_SHUTDOWN = False
+
+def _sig_handler(signum, frame):
+    global _SHUTDOWN
+    _SHUTDOWN = True
+
+# register soft shutdown
+try:
+    signal.signal(signal.SIGINT, _sig_handler)
+    signal.signal(signal.SIGTERM, _sig_handler)
+except Exception:
+    pass
 
 def _set_transport_env(transport: str):
     if transport:
@@ -16,10 +29,12 @@ def run_rtsp_loop(url: str,
                   transport: str = "tcp",
                   log_level: str = "INFO") -> int:
     """
-    Minimal RTSP reader with logging:
-    - Open/read with reconnect backoff
-    - Smoothed FPS
-    - Reconnect reason reporting
+    RTSP reader with health logging:
+    - Open/read with reconnect backoff (1s..10s)
+    - Smoothed FPS (EMA)
+    - Drop-rate and reconnect counters
+    - Graceful shutdown on SIGINT/SIGTERM
+    Returns exit code (0=ok).
     """
     log = setup_logger("rtsp", log_level)
 

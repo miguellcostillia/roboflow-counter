@@ -1,6 +1,6 @@
-# Success Version (Last known good commit)
+# Last known good state (developer-confirmed)
 
-Record the commit SHA that last ran end-to-end successfully.
-
-- Last known working commit: 52b177d74dad963d75b5da447d72bcc3b29670bb (local)
-- Next: update to remote SHA after merging RTSP test PR.
+- Commit: 39cc161
+- Branch: 20251102-1434_feat-config-rtsp-base
+- Time:   2025-11-02 14:43 UTC
+- Notes:  Struktur + Config-Loader + RTSP-Basis bauen lokal erfolgreich; Funktionstests folgen.

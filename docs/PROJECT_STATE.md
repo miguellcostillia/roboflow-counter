@@ -1,16 +1,20 @@
-# Project State (Single Source of Truth)
+# Project State
 
-This file keeps the **current context** so collaborators (and AI assistants) can resume work without chat history.
+- Updated: 2025-11-02 14:43 UTC
+- Branch: 20251102-1434_feat-config-rtsp-base
+- HEAD: 39cc161
 
-## Working Branch
-none
+## Done today
+- Config-Loader (ENV > YAML) implementiert
+- RTSP-Basis (Open, Read, Reconnect, FPS-Throttle) + `run-stream` CLI
 
-## Last Completed Task
-- Base CLI working (hello, show_config, cuda_check)
+## Next steps
+- Tests für Config-Merge (ENV > YAML) und Pfad-Validierung
+- RTSP: Logging verbessern, Stats, Timeout/Backoff feinjustieren
+- Docs: USER_GUIDE Abschnitt für `run-stream` ergänzen
+- Nächster Branch: `<YYYYMMDD-HHMM>_feat-config-tests-and-rtsp-logging`
 
-## Next Required Step
-- Add `rtsp_test` CLI and verify FPS output against camera/RTSP server.
-
-## Notes
-- Collaboration via terminal + GitHub PRs.
-- Update this file with 1–2 lines when pausing work.
+## Quick test commands
+- python -m roboflow_counter.main run-stream --help
+- python -m roboflow_counter.main run-stream
+- python -m roboflow_counter.main run-stream --fps-target 5 rtsp://127.0.0.1:8554/larvacounter

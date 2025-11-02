@@ -133,3 +133,9 @@ damit Branches chronologisch sortierbar sind und Workflow-Navigation erleichtert
 - Jeder neue Branch MUSS diesen Zeitpräfix haben.
 - Änderungen gelten als unvollständig, wenn diese Regel ignoriert wird.
 
+
+---
+
+### Log 2025-11-02 14:43 UTC
+- Added: Config-Loader (ENV > YAML) und RTSP-Basis (`run-stream`) in Branch `20251102-1434_feat-config-rtsp-base` @ `39cc161`
+- Reminder: Bei funktionalen Änderungen **immer** USER_GUIDE + AI_Playbook + CHANGELOG aktualisieren.

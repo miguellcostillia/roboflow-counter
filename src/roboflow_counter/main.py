@@ -1,6 +1,7 @@
 import typer
 from rich import print
 from .settings import load_config
+from .config.loader import load_and_validate
 import subprocess
 
 app = typer.Typer(add_completion=False)
@@ -40,6 +41,7 @@ def cuda_check():
             print("[yellow]OpenCV installed but no CUDA devices found[/yellow]")
     except Exception as e:
         print(f"[red]OpenCV CUDA unavailable[/red] ({e})")
+
 @app.command(name="run-stream")
 def run_stream(
     url: str | None = typer.Option(None, help="RTSP(S) URL; if omitted, taken from config"),
@@ -48,14 +50,16 @@ def run_stream(
     fps_target: float = typer.Option(0.0, help="Target FPS throttle (0=off)"),
     transport: str = typer.Option("tcp", help="RTSP transport: tcp|udp"),
     timeout_ms: int = typer.Option(5000, help="Open timeout in ms"),
+    log_level: str = typer.Option("INFO", help="Log level: DEBUG|INFO|WARNING|ERROR"),
 ):
     """
-    Open RTSP stream, print FPS estimates, reconnect on failure.
+    Open RTSP stream, print smoothed FPS, reconnect on failure.
     """
-    from .config.loader import load_config
+    from .config.loader import load_and_validate
     from .stream.rtsp import run_rtsp_loop
+    from rich import print
 
-    cfg = load_config(cfg_path, env_file)
+    cfg = load_and_validate(cfg_path, env_file)
     if url is None:
         url = (cfg.get("input", {}) or {}).get("rtsp_url")
 
@@ -64,12 +68,13 @@ def run_stream(
         raise typer.Exit(code=2)
 
     print(f"[bold cyan]Opening stream[/bold cyan]: {url}")
-    print(f"[cyan]transport={transport}, timeout={timeout_ms} ms, fps_target={fps_target}[/cyan]")
+    print(f"[cyan]transport={transport}, timeout={timeout_ms} ms, fps_target={fps_target}, log={log_level}[/cyan]")
     try:
         code = run_rtsp_loop(url=url,
                              fps_target=(fps_target if fps_target > 0 else None),
                              open_timeout_ms=timeout_ms,
-                             transport=transport)
+                             transport=transport,
+                             log_level=log_level)
     except KeyboardInterrupt:
         print("[yellow]Interrupted by user[/yellow]")
         code = 0

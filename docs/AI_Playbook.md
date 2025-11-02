@@ -22,6 +22,14 @@ Bei **jeder wichtigen Änderung** im Projekt **müssen** aktualisiert werden:
 Wenn Code, Struktur oder Workflow geändert wird, aber die Doku nicht angepasst ist, gilt der PR als **unvollständig** und darf nicht nach `main` gemerged werden.  
 Die KI ist verantwortlich, diese Dateien vorzuschlagen/zu ergänzen, sobald neue Features, Workflows oder Benutzerpräferenzen entstehen. Änderungen an Code und Doku sollen im **gleichen PR** landen.
 
+### ✅ Pull-Requests erstellen (Workflow)
+
+- PRs werden per Skript erstellt: `./tools/pr.sh`
+- Das Skript pusht den aktuellen Feature-Branch und erstellt einen **Draft-PR** gegen `main`.
+- Merge erfolgt **manuell im Browser** (kein Auto-Merge).
+- Nie auf `main` arbeiten (keine Commits/Pushes/PRs von `main`).
+
+
 ## User-Präferenzen (Michael)
 - Terminal-first Workflow, keine IDE nötig.
 - `cat` zum Anzeigen von Code (statt Editor/Tree-Spam).

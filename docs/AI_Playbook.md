@@ -96,14 +96,29 @@ Vor jedem größeren Change immer prüfen:
 
 ---
 
-## Branch-Hygiene & Sichtbarkeit
 
-- Standard: **Nur `main` + 1 aktiver Feature-Branch** sichtbar.
-- Nach Merge werden Feature-Branches **inaktiv gemacht**:
-  1) Branch-Spitze wird mit Tag `arch/<YYYYMMDD-HHMM>_<branch>` archiviert.
-  2) Remote-Branch wird gelöscht (Übersicht bleibt sauber).
-- Mergen ausschließlich via **Pull Request** im Browser.
-- Ausnahme: mehrere aktive Branches nur, wenn parallel zwingend nötig.
+## 🧠 Branch-Verhalten der AI (2025-11-02)
+
+- Die AI erstellt **nie automatisch einen Branch**.
+- Wenn der User auf `main` ist, fragt die AI IMMER:
+
+  > Du bist auf `main`. Willst du…
+  > 1) zur letzten Feature-Branch zurück?
+  > 2) einen neuen Feature-Branch erstellen?
+  > 3) nur `main` aktualisieren und nichts ändern?
+
+- Wenn der aktuelle Branch **nicht `main`** ist:
+  - Weiterarbeiten in diesem Branch (standard)
+  - Nur auf Nachfrage branch wechseln
+
+- **Nie automatisch commits, pushes oder branch deletes**
+- **Nie `prup` auf `main`**
+- Feature-Branch Workflow:
+  1 branch aktiv  
+  Merge via PR  
+  Danach `finish_branch`
+
+**Ziel:** volle Kontrolle, AI darf nur assistieren, nie Git-Aktionen erzwingen.
 
 ---
 

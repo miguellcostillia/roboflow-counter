@@ -1,0 +1,38 @@
+#!/usr/bin/env sh
+set -eu
+
+# 1) Wenn aktueller Branch 'main' ist -> blockieren (unabhängig von STDIN)
+current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")"
+if [ "$current_branch" = "main" ]; then
+  echo "❌ Push von 'main' ist lokal gesperrt. Bitte PR-Workflow verwenden (prup)."
+  exit 1
+fi
+
+# 2) STDIN-Refs prüfen (falls vorhanden)
+protected_branch="main"
+blocked=0
+while read local_ref local_sha remote_ref remote_sha; do
+  # Falls kein input (Everything up-to-date), wird diese Schleife nicht ausgeführt.
+  branch="${remote_ref#refs/heads/}"
+  if [ "$branch" = "$protected_branch" ]; then
+    blocked=1
+  fi
+done
+
+if [ $blocked -eq 1 ]; then
+  echo "❌ Push auf '$protected_branch' ist lokal gesperrt. Bitte PR im Browser mergen."
+  exit 1
+fi
+
+# 3) Zusätzliche Absicherung: Prüfe, ob der Upstream-Zweig 'main' wäre
+#    Das trifft u.a. zu, wenn 'git push' ohne Ref aufgerufen wird und der lokale Branch upstream 'main' hat (sollte nicht der Fall sein).
+upstream_ref="$(git rev-parse --abbrev-ref --symbolic-full-name @{push} 2>/dev/null || echo "")"
+case "$upstream_ref" in
+  */main|main)
+    echo "❌ Push gegen Upstream 'main' erkannt. Bitte PR-Workflow verwenden (prup)."
+    exit 1
+    ;;
+esac
+
+# alles gut
+exit 0

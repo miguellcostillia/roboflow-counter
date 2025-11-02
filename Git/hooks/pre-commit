@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")"
+if [ "$branch" = "main" ]; then
+  echo "❌ Commits auf 'main' sind lokal gesperrt. Bitte Feature-Branch + PR-Workflow (prup) verwenden."
+  exit 1
+fi
+exit 0

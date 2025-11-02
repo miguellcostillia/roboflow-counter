@@ -1,0 +1,16 @@
+[project]
+name = "roboflow-counter"
+version = "0.1.0"
+description = "Roboflow-based larva counter"
+authors = [{ name = "Michael" }]
+requires-python = ">=3.10"
+
+dependencies = [
+  "typer>=0.12",
+  "rich>=13",
+  "python-dotenv>=1.0",
+  "pydantic>=2",
+]
+
+[project.scripts]
+roboflow-counter = "roboflow_counter.main:app"

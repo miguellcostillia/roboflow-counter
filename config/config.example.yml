@@ -1,0 +1,53 @@
+# config.example.yml — kopiere zu config/config.yml und passe an
+# Richtlinie: YAML enthält strukturierte Pipelines/Settings; Secrets bleiben in .env
+# ENV-Werte dürfen YAML überschreiben (Priorität: ENV > YAML)
+
+app:
+  name: roboflow-counter
+  log_level: INFO  # DEBUG|INFO|WARNING|ERROR
+
+cuda:
+  enabled: true
+  device_index: 0
+
+input:
+  rtsp_url: "rtsp://127.0.0.1:8554/larvacounter"
+  rtsp_transport: "tcp"      # tcp|udp
+  timeout_ms: 5000
+
+pipeline:
+  fps_target: 5              # gewünschte Ausgabe-FPS
+  frame_skip: 0              # 0 = jedes Frame
+  resize:
+    width: 1280
+    height: 720
+  overlay:
+    mode: "none"             # none|highlight|boxes|motion
+    alpha: 0.5
+
+roboflow:
+  model_id: "workspace/project/1"  # z.B. ecofly/larvacounter/1
+  api_url: "https://infer.roboflow.com"
+  confidence: 0.5
+  overlap: 0.3
+  max_objects: 200
+  # API-Key aus ENV: ROBOFLOW_API_KEY
+
+output:
+  rtsp_publish: true
+  rtsp_url: "rtsp://127.0.0.1:8554/roboflow-counter"
+  snapshot_dir: "/opt/larvacounter/export/snapshots"
+  snapshot_interval_sec: 60
+
+metrics:
+  influx:
+    enabled: false
+    url: "http://localhost:8086"
+    org: "default"
+    bucket: "testbucket"
+    token_env: "INFLUX_TOKEN"   # Token kommt aus ENV
+
+# Hinweise:
+# - Lege deine echte config unter config/config.yml an.
+# - Lege deine Secrets unter config/.env an (niemals committen).
+# - ENV kann einzelne Felder überschreiben (z.B. ROBOFLOW_API_KEY, INFLUX_TOKEN).

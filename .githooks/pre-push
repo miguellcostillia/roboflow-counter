@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Block pushing to main; require PR workflow.
+protected_branch="main"
+while read local_ref local_sha remote_ref remote_sha; do
+  # remote_ref like refs/heads/main
+  branch="${remote_ref#refs/heads/}"
+  if [ "$branch" = "$protected_branch" ]; then
+    echo "❌ Push auf '$protected_branch' ist lokal blockiert. Bitte über Pull Request mergen."
+    echo "   Verwende: prup  (erstellt/öffnet PR im Browser)"
+    exit 1
+  fi
+done
+exit 0

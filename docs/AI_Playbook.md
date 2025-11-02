@@ -104,3 +104,9 @@ Vor jedem größeren Change immer prüfen:
 
 **Grundsatz:** Immer nur `main` + 1 aktiver Feature-Branch. Nach Merge: Branch archivieren & löschen (unsichtbar halten).
 
+
+## Push & Merge Regeln
+- **Nie direkt auf `main` pushen** (lokal blockiert durch Hook).
+- **Befehl:** `prup` → pusht aktuellen Branch und öffnet/erstellt PR.
+- **Nach Merge:** `finish_branch` → main aktualisieren & Feature-Branch löschen.
+- **Wenn User sagt:** „pushen wir das ins main“ → **immer** PR-Workflow verwenden, keine direkten Merges.

@@ -1,6 +1,5 @@
 from __future__ import annotations
 import logging, sys
-from typing import Optional
 
 _LEVELS = {"CRITICAL":50,"ERROR":40,"WARNING":30,"INFO":20,"DEBUG":10,"NOTSET":0}
 
@@ -16,6 +15,7 @@ def setup_logger(name: str = "roboflow_counter", level: str = "INFO") -> logging
     return logger
 
 def get_level_name(level: int) -> str:
-    for k,v in _LEVELS.items():
-        if v == level: return k
+    for k, v in _LEVELS.items():
+        if v == level:
+            return k
     return str(level)

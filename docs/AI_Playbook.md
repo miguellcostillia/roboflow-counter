@@ -93,3 +93,15 @@ Vor jedem größeren Change immer prüfen:
 - `docs/PROJECT_STATE.md` – aktueller Task / Next step
 - `docs/ERROR_LOG.md` – letzte Fehlermeldungen
 - `docs/SUCCESS_VERSION.md` – letzte stabile Commit-ID
+
+---
+
+## Branch-Hygiene & Sichtbarkeit
+
+- Standard: **Nur `main` + 1 aktiver Feature-Branch** sichtbar.
+- Nach Merge werden Feature-Branches **inaktiv gemacht**:
+  1) Branch-Spitze wird mit Tag `arch/<YYYYMMDD-HHMM>_<branch>` archiviert.
+  2) Remote-Branch wird gelöscht (Übersicht bleibt sauber).
+- Mergen ausschließlich via **Pull Request** im Browser.
+- Ausnahme: mehrere aktive Branches nur, wenn parallel zwingend nötig.
+

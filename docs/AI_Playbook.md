@@ -93,3 +93,14 @@ Vor jedem größeren Change immer prüfen:
 - `docs/PROJECT_STATE.md` – aktueller Task / Next step
 - `docs/ERROR_LOG.md` – letzte Fehlermeldungen
 - `docs/SUCCESS_VERSION.md` – letzte stabile Commit-ID
+
+---
+
+## Arbeits-Checklisten
+
+- **Session-Start:** Siehe `docs/SESSION_START.md`
+- **Session-Ende:** Siehe `docs/SESSION_END.md`
+- **PR-Workflow:** Pull Requests werden im Browser erstellt und gemerged. Vorlage: `.github/pull_request_template.md`
+
+**Grundsatz:** Immer nur `main` + 1 aktiver Feature-Branch. Nach Merge: Branch archivieren & löschen (unsichtbar halten).
+

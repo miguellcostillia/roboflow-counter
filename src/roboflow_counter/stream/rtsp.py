@@ -1,35 +1,38 @@
 from __future__ import annotations
-import time
+import time, math, os
 from typing import Optional
+from ..util.logging import setup_logger
+
+def _set_transport_env(transport: str):
+    if transport:
+        try:
+            os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = f"rtsp_transport;{transport}"
+        except Exception:
+            pass
 
 def run_rtsp_loop(url: str,
                   fps_target: Optional[float] = None,
                   open_timeout_ms: int = 5000,
-                  transport: str = "tcp") -> int:
+                  transport: str = "tcp",
+                  log_level: str = "INFO") -> int:
     """
-    Minimal RTSP reader using OpenCV (if available).
-    - Tries to open the stream and reads frames in a loop.
-    - Prints periodic FPS estimate.
-    - Reconnects on failure with backoff.
-    Returns process exit code (0 = ok).
+    Minimal RTSP reader with logging:
+    - Open/read with reconnect backoff
+    - Smoothed FPS
+    - Reconnect reason reporting
     """
+    log = setup_logger("rtsp", log_level)
+
     try:
         import cv2  # type: ignore
     except Exception as e:
         print(f"[rtsp] OpenCV not available: {e}")
         return 2
 
-    # Optional: hint OpenCV FFMPEG to use TCP
-    try:
-        import os
-        if transport:
-            os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = f"rtsp_transport;{transport}"
-    except Exception:
-        pass
+    _set_transport_env(transport)
 
-    def open_cap() -> "cv2.VideoCapture":
+    def open_cap():
         cap = cv2.VideoCapture(url, cv2.CAP_FFMPEG)
-        # Some builds support CAP_PROP_OPEN_TIMEOUT_MSEC, many don't—ignore failures.
         try:
             cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, float(open_timeout_ms))
         except Exception:
@@ -38,21 +41,35 @@ def run_rtsp_loop(url: str,
 
     cap = open_cap()
     backoff = 1.0
-    last_print = time.time()
+    last_log = time.time()
     frames = 0
     start = time.time()
+    # FPS smoothing with EMA
+    ema_fps: Optional[float] = None
+    alpha = 0.2
 
-    def throttle(tgt_fps: Optional[float], t_frame_start: float):
-        if not tgt_fps or tgt_fps <= 0:
-            return
+    def throttle(tgt_fps: Optional[float], t0: float):
+        if not tgt_fps or tgt_fps <= 0: return
         min_dt = 1.0 / float(tgt_fps)
-        dt = time.time() - t_frame_start
+        dt = time.time() - t0
         if dt < min_dt:
             time.sleep(min_dt - dt)
 
+    def log_rate():
+        nonlocal ema_fps
+        now = time.time()
+        if now - last_log >= 2.0:
+            elapsed = now - start
+            inst = frames / elapsed if elapsed > 0 else 0.0
+            ema_fps = inst if ema_fps is None else (alpha * inst + (1 - alpha) * ema_fps)
+            log.info("frames=%d, fps~%.2f (ema=%.2f, target=%s)",
+                     frames, inst, (ema_fps or 0.0), (fps_target if fps_target else "∞"))
+            return True
+        return False
+
     while True:
         if not cap.isOpened():
-            print(f"[rtsp] not opened, retry in {backoff:.1f}s …")
+            log.warning("not opened, retry in %.1fs …", backoff)
             time.sleep(backoff)
             cap.release()
             cap = open_cap()
@@ -62,22 +79,17 @@ def run_rtsp_loop(url: str,
         t0 = time.time()
         ok, _ = cap.read()
         if not ok:
-            print(f"[rtsp] read failed, reconnecting …")
+            # Try to detect reason: we can't access low-level ffmpeg here, so inform generic
+            log.error("read failed (network jitter/timeout?). Reconnecting in %.1fs …", backoff)
             cap.release()
             time.sleep(backoff)
             cap = open_cap()
             backoff = min(backoff * 2, 10)
             continue
 
-        # got a frame
         frames += 1
         backoff = 1.0
         throttle(fps_target, t0)
-
-        now = time.time()
-        if now - last_print >= 2.0:
-            elapsed = now - start
-            fps = frames / elapsed if elapsed > 0 else 0.0
-            print(f"[rtsp] {frames} frames, ~{fps:.2f} fps (target={fps_target or '∞'})")
-            last_print = now
-    # unreachable in normal loop; KeyboardInterrupt will exit caller
+        if log_rate():
+            last_log = time.time()
+    # unreachable; Ctrl+C handled by caller

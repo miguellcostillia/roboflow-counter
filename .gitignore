@@ -6,3 +6,15 @@ __pycache__/
 *.pyc
 patches/
 *.patch
+
+# Python cache
+__pycache__/
+*.pyc
+
+# build artifacts
+*.egg-info/
+
+# patches
+patches/
+*.patch
+

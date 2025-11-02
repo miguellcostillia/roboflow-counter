@@ -42,6 +42,7 @@ def cuda_check():
     except Exception as e:
         print(f"[red]OpenCV CUDA unavailable[/red] ({e})")
 
+
 @app.command(name="run-stream")
 def run_stream(
     url: str | None = typer.Option(None, help="RTSP(S) URL; if omitted, taken from config"),

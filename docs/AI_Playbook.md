@@ -105,3 +105,35 @@ Vor jedem größeren Change immer prüfen:
 - Mergen ausschließlich via **Pull Request** im Browser.
 - Ausnahme: mehrere aktive Branches nur, wenn parallel zwingend nötig.
 
+---
+
+## 🔒 Repository Architecture Rules (added 2025-11-02)
+
+### Root folder structure is protected
+
+Die folgenden Top-Level-Ordner sind **geschützt** und dürfen **nur nach expliziter Bestätigung** des Users geändert werden:
+- `config/` – User- und Systemkonfiguration
+- `docs/` – Dokumentation (Handbücher, Playbook, Logs)
+- `src/` – Anwendungscode
+- `tests/` – Tests
+- `tools/` – Entwickler-Werkzeuge
+- `Git/` – **alle Git-bezogenen Dateien** (Hooks, Hilfsskripte, Templates, Meta-Tools)
+
+**Regel:**  
+> Änderungen an der Root-Projektstruktur nur in Ausnahmefällen.  
+> **Vor jeder Änderung fragt die AI nochmals um ausdrückliche Bestätigung.**
+
+### Git folder rule
+
+verwende Zentrales Git-Verzeichnis für alle files die mit git zusammenhängen
+
+
+Beinhaltet:
+- Git-Hooks
+- Workflow-Skripte (`prup`, `finish_branch`, `nb`)
+- Git-Config/Presets
+- Repository-Maintenance-Skripte
+
+**Hinweis:** Das Verschieben bestehender Git-Dateien (z. B. `.githooks/`) erfolgt **nur nach separater Bestätigung** in einem eigenen PR.
+
+

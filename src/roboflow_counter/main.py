@@ -40,5 +40,40 @@ def cuda_check():
             print("[yellow]OpenCV installed but no CUDA devices found[/yellow]")
     except Exception as e:
         print(f"[red]OpenCV CUDA unavailable[/red] ({e})")
+@app.command(name="run-stream")
+def run_stream(
+    url: str | None = typer.Option(None, help="RTSP(S) URL; if omitted, taken from config"),
+    cfg_path: str = typer.Option("config/config.yml", help="Path to YAML config"),
+    env_file: str = typer.Option("config/.env", help="Path to .env (secrets)"),
+    fps_target: float = typer.Option(0.0, help="Target FPS throttle (0=off)"),
+    transport: str = typer.Option("tcp", help="RTSP transport: tcp|udp"),
+    timeout_ms: int = typer.Option(5000, help="Open timeout in ms"),
+):
+    """
+    Open RTSP stream, print FPS estimates, reconnect on failure.
+    """
+    from .config.loader import load_config
+    from .stream.rtsp import run_rtsp_loop
+
+    cfg = load_config(cfg_path, env_file)
+    if url is None:
+        url = (cfg.get("input", {}) or {}).get("rtsp_url")
+
+    if not url:
+        print("[bold red]No RTSP URL provided or found in config.input.rtsp_url[/bold red]")
+        raise typer.Exit(code=2)
+
+    print(f"[bold cyan]Opening stream[/bold cyan]: {url}")
+    print(f"[cyan]transport={transport}, timeout={timeout_ms} ms, fps_target={fps_target}[/cyan]")
+    try:
+        code = run_rtsp_loop(url=url,
+                             fps_target=(fps_target if fps_target > 0 else None),
+                             open_timeout_ms=timeout_ms,
+                             transport=transport)
+    except KeyboardInterrupt:
+        print("[yellow]Interrupted by user[/yellow]")
+        code = 0
+    raise typer.Exit(code=code)
+
 if __name__ == "__main__":
     app()

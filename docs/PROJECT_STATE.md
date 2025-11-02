@@ -1,6 +1,6 @@
 # Project State (Single Source of Truth)
 
-This file keeps the **current context** so that collaborators (and AI assistants) can resume work without chat history.
+This file keeps the **current context** so collaborators (and AI assistants) can resume work without chat history.
 
 ## Working Branch
 none
@@ -13,4 +13,4 @@ none
 
 ## Notes
 - Collaboration via terminal + GitHub PRs.
-- Update this file with 1-2 lines when pausing work.
+- Update this file with 1–2 lines when pausing work.

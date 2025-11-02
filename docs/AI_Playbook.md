@@ -86,56 +86,10 @@ damit Branches chronologisch sortierbar sind und Workflow-Navigation erleichtert
 - Änderungen gelten als unvollständig, wenn diese Regel ignoriert wird.
 
 
-## Branch-Namenskonvention (zeitlich sortiert)
 
-Alle neuen Branches müssen mit einem Zeitstempel im Format `YYYYMMDD-HHMM` beginnen,
-damit Branches chronologisch sortierbar sind und Workflow-Navigation erleichtert wird.
-
-**Format:**
-<YYYYMMDD>-<HHMM>_<type>-<name>
-
-**Beispiele:**
-20251102-2230_feat-rtsp-test
-20251102-2232_docs-playbook
-20251103-0710_fix-config-loader
-
-**Branch-Typen:**
-- feat    = neues Feature
-- fix     = Bugfix
-- docs    = Dokumentation
-- cleanup = Aufräumen / Strukturpflege
-
-**Regel:**
-- Jeder neue Branch MUSS diesen Zeitpräfix haben.
-- Änderungen gelten als unvollständig, wenn diese Regel ignoriert wird.
-
-
-## Branch-Namenskonvention (zeitlich sortiert)
-
-Alle neuen Branches müssen mit einem Zeitstempel im Format `YYYYMMDD-HHMM` beginnen,
-damit Branches chronologisch sortierbar sind und Workflow-Navigation erleichtert wird.
-
-**Format:**
-<YYYYMMDD>-<HHMM>_<type>-<name>
-
-**Beispiele:**
-20251102-2230_feat-rtsp-test
-20251102-2232_docs-playbook
-20251103-0710_fix-config-loader
-
-**Branch-Typen:**
-- feat    = neues Feature
-- fix     = Bugfix
-- docs    = Dokumentation
-- cleanup = Aufräumen / Strukturpflege
-
-**Regel:**
-- Jeder neue Branch MUSS diesen Zeitpräfix haben.
-- Änderungen gelten als unvollständig, wenn diese Regel ignoriert wird.
-
-
----
-
-### Log 2025-11-02 14:43 UTC
-- Added: Config-Loader (ENV > YAML) und RTSP-Basis (`run-stream`) in Branch `20251102-1434_feat-config-rtsp-base` @ `39cc161`
-- Reminder: Bei funktionalen Änderungen **immer** USER_GUIDE + AI_Playbook + CHANGELOG aktualisieren.
+## Vorbereitung vor größeren Änderungen
+Vor jedem größeren Change immer prüfen:
+- `docs/CHANGELOG.md` – Verlauf & letzte wichtige Änderungen
+- `docs/PROJECT_STATE.md` – aktueller Task / Next step
+- `docs/ERROR_LOG.md` – letzte Fehlermeldungen
+- `docs/SUCCESS_VERSION.md` – letzte stabile Commit-ID

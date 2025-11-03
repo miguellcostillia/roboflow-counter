@@ -83,3 +83,35 @@ def run_stream(
 
 if __name__ == "__main__":
     app()
+
+@app.command(name="run-highlight")
+def run_highlight(
+    url: str | None = typer.Option(None, help="RTSP(S) IN; sonst aus config"),
+    out_url: str | None = typer.Option(None, help="RTSP OUT; sonst aus config"),
+    cfg_path: str = typer.Option("config/config.yml", help="Config YAML"),
+    env_file: str = typer.Option("config/.env", help=".env (secrets)"),
+    fps_target: float = typer.Option(0.0, help="Ziel-FPS, 0=auto"),
+    timeout_ms: int = typer.Option(8000, help="Open timeout ms"),
+    log_level: str = typer.Option("INFO", help="DEBUG|INFO|WARNING|ERROR"),
+):
+    """
+    GPU Motion-Highlight (Larven heller) → RTSP Output.
+    """
+    from .config.loader import load_and_validate
+    from .stream.highlight import run_highlight_loop
+    from rich import print
+
+    cfg = load_and_validate(cfg_path, env_file)
+    if url is None:
+        url = (cfg.get("input",{}) or {}).get("rtsp_url")
+    if out_url is None:
+        out_url = (cfg.get("output",{}) or {}).get("rtsp_url")
+    if not url or not out_url:
+        print("[bold red]Missing input/output RTSP in config[/bold red]")
+        raise typer.Exit(code=2)
+
+    print(f"[bold cyan]Motion-Highlight[/bold cyan] IN={url} → OUT={out_url}")
+    try:
+        run_highlight_loop(url, out_url, log=log_level, fps_target=fps_target, open_timeout_ms=timeout_ms)
+    except KeyboardInterrupt:
+        print("[yellow]Interrupted by user[/yellow]")

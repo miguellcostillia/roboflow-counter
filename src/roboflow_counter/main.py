@@ -6,74 +6,84 @@ import typer
 from rich import print as rprint
 from rich.table import Table
 from .config.loader import load_and_validate
-from .stream.highlight import run_highlight_loop
+import subprocess
 
-app = typer.Typer(help="Roboflow Counter CLI")
+app = typer.Typer(add_completion=False)
 
+@app.command()
+def hello(name: str = "world"):
+    print(f"[bold green]Hello {name}![/bold green] — Roboflow Counter ready 🚀")
 
-def _resolve_urls(cfg_path, env_path, url_in_cli, url_out_cli):
-    cfg = load_and_validate(cfg_path, env_path)
-    ui = url_in_cli or (cfg.get("input") or {}).get("rtsp_url")
-    uo = url_out_cli or (cfg.get("output") or {}).get("rtsp_url")
-    if not ui or not uo: raise ValueError("missing rtsp url")
-    return ui, uo, cfg
-
-
-def _apply_env_from_cfg(cfg):
-    hi = cfg.get("highlight") or {}
-    mg = hi.get("gain",0.70)
-    os.environ["HL_GAIN"]=str(mg)
-    ga = (hi.get("gauss") or {}).get("ksize",7)
-    os.environ["HL_GAUSS"]=str(ga)
-
-    mo = cfg.get("motion") or {}
-    os.environ["HL_EMA_ALPHA"]=str(mo.get("ema_alpha",0.05))
-    os.environ["HL_THRESH"]=str(mo.get("threshold",12))
-
-    # new
-    rg = cfg.get("region") or {}
-    os.environ["HL_MIN_REGION"] = str(rg.get("min_pixels",50))
-    os.environ["HL_GROW_ITERS"] = str(rg.get("grow_iters",2))
-    os.environ["HL_GROW_EDGE_T"] = str(rg.get("edge_threshold",20))
-    os.environ["HL_GROW_GRAY_DELTA"] = str(rg.get("gray_delta",0))
-
-    rt = cfg.get("runtime") or {}
-    return float(rt.get("fps",0.0)), int(rt.get("open_timeout_ms",8000))
+@app.command()
+def show_config(cfg_path: str = "config/config.yml", env_file: str = "config/.env"):
+    cfg = load_config(cfg_path, env_file)
+    print("[bold]Active Config:[/bold]")
+    print(cfg.model_dump())
 
 
-@app.command("show-config")
-def show_config(cfg_path="config/config.yml",env_file="config/.env"):
-    cfg=load_and_validate(cfg_path,env_file)
-    t=Table(title="Config")
-    for sec,k,v in [
-        ("input","rtsp_url",(cfg.get("input") or {}).get("rtsp_url")),
-        ("output","rtsp_url",(cfg.get("output") or {}).get("rtsp_url")),
-        ("highlight","gain",(cfg.get("highlight")or{}).get("gain")),
-        ("highlight.gauss","ksize",(cfg.get("highlight")or{}).get("gauss",{}).get("ksize")),
-        ("motion","ema_alpha",(cfg.get("motion")or{}).get("ema_alpha")),
-        ("region","min_pixels",(cfg.get("region")or{}).get("min_pixels")),
-        ("region","grow_iters",(cfg.get("region")or{}).get("grow_iters")),
-        ("region","edge_threshold",(cfg.get("region")or{}).get("edge_threshold")),
-        ("region","gray_delta",(cfg.get("region")or{}).get("gray_delta")),
-        ("runtime","fps",(cfg.get("runtime")or{}).get("fps")),
-    ]:
-        t.add_row(sec,k,str(v))
-    rprint(t)
+@app.command()
+def cuda_check():
+    """Check CUDA / GPU status."""
+    from rich import print
+    import subprocess
+    print("[bold cyan]Checking CUDA / GPU...[/bold cyan]")
+    try:
+        result = subprocess.run(["nvidia-smi"], capture_output=True, text=True)
+        if result.returncode == 0:
+            print("[bold green]GPU detected via nvidia-smi ✅[/bold green]")
+            print(result.stdout)
+        else:
+            print("[bold red]nvidia-smi failed[/bold red]")
+            print(result.stderr)
+    except FileNotFoundError:
+        print("[bold red]nvidia-smi not found[/bold red] (NVIDIA drivers missing or container runtime?)")
+    try:
+        import cv2
+        count = cv2.cuda.getCudaEnabledDeviceCount()
+        print(f"OpenCV CUDA devices: {count}")
+        if count == 0:
+            print("[yellow]OpenCV installed but no CUDA devices found[/yellow]")
+    except Exception as e:
+        print(f"[red]OpenCV CUDA unavailable[/red] ({e})")
 
 
-@app.command("run-highlight")
-def run_highlight(url:Optional[str]=None,out_url:Optional[str]=None,log_level="INFO",
-                  cfg_path="config/config.yml",env_file="config/.env",
-                  fps_target_cli:float=0.0,open_timeout_ms_cli:int=0):
+@app.command(name="run-stream")
+def run_stream(
+    url: str | None = typer.Option(None, help="RTSP(S) URL; if omitted, taken from config"),
+    cfg_path: str = typer.Option("config/config.yml", help="Path to YAML config"),
+    env_file: str = typer.Option("config/.env", help="Path to .env (secrets)"),
+    fps_target: float = typer.Option(0.0, help="Target FPS throttle (0=off)"),
+    transport: str = typer.Option("tcp", help="RTSP transport: tcp|udp"),
+    timeout_ms: int = typer.Option(5000, help="Open timeout in ms"),
+    log_level: str = typer.Option("INFO", help="Log level: DEBUG|INFO|WARNING|ERROR"),
+):
+    """
+    Open RTSP stream, print smoothed FPS, reconnect on failure.
+    """
+    from .config.loader import load_and_validate
+    from .stream.rtsp import run_rtsp_loop
+    from rich import print
 
-    ui,uo,cfg = _resolve_urls(cfg_path,env_file,url,out_url)
-    fps_cfg,timeout_cfg = _apply_env_from_cfg(cfg)
-    fps = fps_target_cli if fps_target_cli>0 else fps_cfg
-    timeout = open_timeout_ms_cli if open_timeout_ms_cli>0 else timeout_cfg
+    cfg = load_and_validate(cfg_path, env_file)
+    if url is None:
+        url = (cfg.get("input", {}) or {}).get("rtsp_url")
 
-    print(f"Motion-Highlight {ui} → {uo}")
-    run_highlight_loop(ui,uo,log=log_level,fps_target=fps,open_timeout_ms=timeout)
+    if not url:
+        print("[bold red]No RTSP URL provided or found in config.input.rtsp_url[/bold red]")
+        raise typer.Exit(code=2)
 
+    print(f"[bold cyan]Opening stream[/bold cyan]: {url}")
+    print(f"[cyan]transport={transport}, timeout={timeout_ms} ms, fps_target={fps_target}, log={log_level}[/cyan]")
+    try:
+        code = run_rtsp_loop(url=url,
+                             fps_target=(fps_target if fps_target > 0 else None),
+                             open_timeout_ms=timeout_ms,
+                             transport=transport,
+                             log_level=log_level)
+    except KeyboardInterrupt:
+        print("[yellow]Interrupted by user[/yellow]")
+        code = 0
+    raise typer.Exit(code=code)
 
-def main(): app()
-if __name__=="__main__": main()
+if __name__ == "__main__":
+    app()

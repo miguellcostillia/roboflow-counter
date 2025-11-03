@@ -1,0 +1,10 @@
+    # letzter Ausweg: CPU stack + Upload
+    m = gpu_mask.download()
+    if m is None or not hasattr(m, "shape") or m.size == 0:
+        m = np.zeros((h, w), dtype=np.uint8)
+    elif m.dtype != np.uint8:
+        m = m.astype(np.uint8, copy=False)
+
+    m3 = np.dstack([m, m, m])
+    dst.upload(m3)
+    return dst

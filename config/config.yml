@@ -1,12 +1,98 @@
+###############################################################################
+# 📦 Roboflow Inference + Motion Highlight Settings
+# Optimiert für Larvenbewegung / Vibrationssieb
+###############################################################################
+
 app:
   name: roboflow-counter
-  data_dir: /opt/larvacounter/export
+  data_dir: /opt/larvacounter/export   # Export-Ordner für Debug Frames, Logs
 
+# ---------------------------------------------------------------------------
+# 🎥 Kamera-Input (RTSP/RTSPS)
+# ---------------------------------------------------------------------------
 input:
-  rtsp_url: "rtsps://192.168.1.1:7441/XXXX?enableSrtp"
+  # RTSP(S) Kamera Quelle
+  # Beispiel Unifi: rtsps://ip:7441/token?enableSrtp
+  rtsp_url: "rtsps://192.168.1.1:7441/bMG3xZFjDVjXDCru?"
 
+# ---------------------------------------------------------------------------
+# 📡 Video Output (RTSP zu MediaMTX / VLC etc.)
+# ---------------------------------------------------------------------------
 output:
   rtsp_url: "rtsp://127.0.0.1:8554/larvacounter"
 
+# ---------------------------------------------------------------------------
+# 🧠 Roboflow Model (für spätere Einbindung)
+# ---------------------------------------------------------------------------
 model:
-  id: "workspace/project:1"
+  id: "workspace/project:1"   # Aktuelles Training / Dataset Version
+
+###############################################################################
+# ✨ HIGHLIGHT OVERLAY SETTINGS
+###############################################################################
+background_darken: 0.40   # Abdunklungsfaktor (1.0 = kein Abdunkeln, 0.5 = 50% Helligkeit)
+
+highlight:
+  # Blendfaktor der Hervorhebung (0 = kein Overlay, 1 = volle Stärke)
+  # Bereich: 0.0 – 1.0
+  gain: 0.4
+
+
+  # Weichzeichnen vor Bewegungserkennung (glättet Rauschen + Lichtflackern)
+  gauss:
+    # Kernelgröße (ungerade Zahl, größer = weicher)
+    # Bereich: 3,5,7,...31 (Empfehlung: 5–9)
+    ksize: 20
+
+    # Falls "auto": sigma wird passend zur Kernelgröße berechnet
+    # Bereich: "auto" oder float (z.B. 1.0–6.0)
+    sigma: "auto"
+
+###############################################################################
+# 🐛 MOTION DETECTION (EMA = Exponential Moving Average)
+###############################################################################
+motion:
+  method: "ema"            # aktuell nur "ema", später: background-model
+
+  # Glättet zeitlich / reduziert Frame-Wobble
+  # kleiner = träger (weniger Flackern), größer = empfindlicher
+  # Bereich: 0.005 – 0.20  (BSF optimal: 0.01 – 0.05)
+  ema_alpha: 0.05
+
+  # Bewegungsschwelle pro Pixel (niedriger = empfindlicher)
+  # Bereich: 5 – 200  (BSF optimal: 50 – 120)
+  threshold: 150
+
+###############################################################################
+# 🧫 REGION & GROWTH FILTER
+# Größere zusammenhängende Larvenbewegungen erkennen, Reflexionen filtern
+###############################################################################
+region:
+  # Mindestgröße eines Bewegungsclusters (Pixel)
+  # Bereich: 10 – 300 (BSF optimal: 50–150)
+  min_pixels: 60
+
+  # Wie viele Iterationen der Maske wachsen dürfen (Fang Larvenkörper)
+  # Bereich: 0 – 5
+  grow_iters: 2
+
+  # Kante-Schwelle (Sobel) für mask growth
+  # niedriger = wächst mehr, höher = stoppt an Kanten
+  # Bereich: 5 – 60 (BSF optimal: 15–30)
+  edge_threshold: 20
+
+  # Optional: grauwert-Ähnlichkeit beim Wachstum prüfen (0 = aus)
+  # Bereich: 0 – 40 (BSF optimal: 0–15)
+  gray_delta: 0
+
+###############################################################################
+# ⚙️ RUNTIME SETTINGS
+###############################################################################
+runtime:
+  # FPS Limit des Ausgabe-Streams
+  # 0 = automatisch Kamera FPS
+  fps: 0
+
+  # Timeout fürs Öffnen des Kamera-Streams (ms)
+  # Bereich: 2000 – 20000 ms
+  open_timeout_ms: 8000

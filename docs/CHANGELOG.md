@@ -1,12 +1,13 @@
+## [v0.01-build-base] - 2025-11-03
 
-## [2025-11-02] (20251102-1434_feat-config-rtsp-base)
 ### Added
-- Config-Loader (ENV > YAML) und RTSP-Basis mit `run-stream` CLI
-- RTSP-Reconnect & FPS-Throttle (minimal)
-- Erste Modulstruktur: `config/loader.py`, `stream/rtsp.py`
+- Baseline nach OpenCV(+CUDA) + ONNX Runtime GPU Setup (keine Binaries)
+- Einheitliche Config: `config/config.yml`, Secrets: `config/.env`
+- CLI: `show-config`, `run-stream` (RTSP geprüft; Exit sauber via `q` / SIGINT)
+
+### Fixed
+- Config-Pfad Fehler (Root → `config/`)
+- FFmpeg-Devel unter Ubuntu 24.04 (`libswresample-dev` statt `libavresample-dev`)
 
 ### Notes
-- CLI testen:
-  - `python -m roboflow_counter.main run-stream --help`
-  - `python -m roboflow_counter.main run-stream` (nimmt URL aus `config/config.yml`)
-  - `python -m roboflow_counter.main run-stream --fps-target 5 rtsp://127.0.0.1:8554/larvacounter`
+- Tag: `v0.01-build-base` als Startpunkt für Folgeprojekte / TensorRT

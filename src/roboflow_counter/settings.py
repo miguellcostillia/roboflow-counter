@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import yaml
 from .config.schema import Config, SecretsCfg
 
-def load_config(cfg_path: str = "config/config.yml", env_file: str = ".env") -> Config:
+def load_config(cfg_path: str = "config/config.yml", env_file: str = "config/.env") -> Config:
     # .env laden, falls vorhanden (für Secrets)
     if env_file and Path(env_file).exists():
         load_dotenv(env_file)

@@ -3,7 +3,7 @@ app:
   data_dir: /opt/larvacounter/export
 
 input:
-  rtsp_url: "rtsps://192.168.1.1:7441/XXXX?enableSrtp"
+  rtsp_url: "rtsps://192.168.1.1:7441/bMG3xZFjDVjXDCru?"
 
 output:
   rtsp_url: "rtsp://127.0.0.1:8554/larvacounter"

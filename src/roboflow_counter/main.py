@@ -30,7 +30,13 @@ def _apply_env_from_cfg(cfg):
     os.environ["HL_EMA_ALPHA"]=str(mo.get("ema_alpha",0.05))
     os.environ["HL_THRESH"]=str(mo.get("threshold",12))
 
-    # new
+    # ===== NEW: statische Hintergrundabdunklung aus config.yml =====
+    # globaler Schalter/Wert 0..1 (0 = aus). Liegt NICHT in "highlight", sondern top-level.
+    bk = float(cfg.get("background_darken", 0.0) or 0.0)
+    os.environ["HL_DARKEN"] = str(bk)
+    # ===============================================================
+
+    # region-Settings werden weiterhin nur als Env exportiert, falls später genutzt
     rg = cfg.get("region") or {}
     os.environ["HL_MIN_REGION"] = str(rg.get("min_pixels",50))
     os.environ["HL_GROW_ITERS"] = str(rg.get("grow_iters",2))
@@ -56,6 +62,8 @@ def show_config(cfg_path="config/config.yml",env_file="config/.env"):
         ("region","edge_threshold",(cfg.get("region")or{}).get("edge_threshold")),
         ("region","gray_delta",(cfg.get("region")or{}).get("gray_delta")),
         ("runtime","fps",(cfg.get("runtime")or{}).get("fps")),
+        # (Optional) Hier könnte man background_darken auch anzeigen:
+        # ("root","background_darken",cfg.get("background_darken")),
     ]:
         t.add_row(sec,k,str(v))
     rprint(t)

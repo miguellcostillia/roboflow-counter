@@ -176,6 +176,11 @@ def run_highlight_loop(url_in, url_out, log="INFO", fps_target=0.0, open_timeout
     alpha = float(os.environ.get("HL_EMA_ALPHA", "0.05"))  # 0..1
     thr = int(float(os.environ.get("HL_THRESH", "12")))    # 0..255
 
+    # ===== NEW: Wert für statische Hintergrundabdunklung (0..1) =====
+    darken = float(os.environ.get("HL_DARKEN", "0.0"))
+    darken = max(0.0, min(0.95, darken))  # clamp
+    # ================================================================
+
     # Init
     gpu_bgr = cv2.cuda_GpuMat()
     gpu_bgr.upload(frame0)
@@ -222,12 +227,29 @@ def run_highlight_loop(url_in, url_out, log="INFO", fps_target=0.0, open_timeout
             d_mask_clean.create(h, w, cv2.CV_8UC1)
             morph.apply(gpu_mask, d_mask_clean)
 
+            # 3-Kanal Maske (0/255) für die bewegten Bereiche
             gpu_mask3 = gray_to_bgr_safe(d_mask_clean)
             if gpu_mask3.size() != gpu_bgr.size():
                 gpu_mask3 = resize_like(gpu_mask3, gpu_bgr)
 
+            # 1) Bewegte Bereiche highlighten (altes Verhalten)
             gain = float(os.environ.get("HL_GAIN", "0.70"))
-            gpu_out = cv2.cuda.addWeighted(gpu_bgr, 1.0, gpu_mask3, gain, 0.0)
+            highlighted = cv2.cuda.addWeighted(gpu_bgr, 1.0, gpu_mask3, gain, 0.0)
+
+            # 2) Statische Hintergrund-Abdunklung nur dort, wo KEINE Bewegung ist
+            if darken > 0.0:
+                inv_mask = cv2.cuda.bitwise_not(d_mask_clean)   # 255 für Hintergrund
+                inv_mask3 = gray_to_bgr_safe(inv_mask)
+
+                # Hintergrund-Version: Original dunkler skaliert
+                bg_dark = cv2.cuda.addWeighted(gpu_bgr, (1.0 - darken), gpu_bgr, 0.0, 0.0)
+
+                # Ausmaskieren und zusammensetzen
+                bg_part = cv2.cuda.bitwise_and(bg_dark,     inv_mask3)  # nur Hintergrund
+                fg_part = cv2.cuda.bitwise_and(highlighted, gpu_mask3)  # nur Bewegung
+                gpu_out = cv2.cuda.add(bg_part, fg_part)
+            else:
+                gpu_out = highlighted
 
             # FFmpeg starten wenn nötig
             if pipe is None:

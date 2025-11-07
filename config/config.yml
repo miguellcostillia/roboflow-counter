@@ -35,14 +35,14 @@ background_darken: 0.40   # Abdunklungsfaktor (1.0 = kein Abdunkeln, 0.5 = 50% H
 highlight:
   # Blendfaktor der Hervorhebung (0 = kein Overlay, 1 = volle Stärke)
   # Bereich: 0.0 – 1.0
-  gain: 0.4
+  gain: 0.04
 
 
   # Weichzeichnen vor Bewegungserkennung (glättet Rauschen + Lichtflackern)
   gauss:
     # Kernelgröße (ungerade Zahl, größer = weicher)
     # Bereich: 3,5,7,...31 (Empfehlung: 5–9)
-    ksize: 20
+    ksize: 27
 
     # Falls "auto": sigma wird passend zur Kernelgröße berechnet
     # Bereich: "auto" oder float (z.B. 1.0–6.0)
@@ -57,11 +57,11 @@ motion:
   # Glättet zeitlich / reduziert Frame-Wobble
   # kleiner = träger (weniger Flackern), größer = empfindlicher
   # Bereich: 0.005 – 0.20  (BSF optimal: 0.01 – 0.05)
-  ema_alpha: 0.05
+  ema_alpha: 0.005
 
   # Bewegungsschwelle pro Pixel (niedriger = empfindlicher)
   # Bereich: 5 – 200  (BSF optimal: 50 – 120)
-  threshold: 150
+  threshold: 50
 
 ###############################################################################
 # 🧫 REGION & GROWTH FILTER

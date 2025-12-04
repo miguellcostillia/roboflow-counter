@@ -1,5 +1,5 @@
 ###############################################################################
-# 📦 Roboflow Inference + Motion Highlight Settings
+# 📦 Roboflow Inference + Motion Highlight + Tracker
 # Optimiert für Larvenbewegung / Vibrationssieb
 ###############################################################################
 
@@ -11,88 +11,147 @@ app:
 # 🎥 Kamera-Input (RTSP/RTSPS)
 # ---------------------------------------------------------------------------
 input:
-  # RTSP(S) Kamera Quelle
-  # Beispiel Unifi: rtsps://ip:7441/token?enableSrtp
-  rtsp_url: "rtsps://192.168.1.1:7441/bMG3xZFjDVjXDCru?"
+  # RTSP(S) Kamera Quelle (z. B. Unifi: rtsps://ip:7441/token?enableSrtp)
+  rtsp_url: "rtsps://192.168.1.1:7441/ChVL5N4cBje3fRy7?enableSrtp"
 
 # ---------------------------------------------------------------------------
 # 📡 Video Output (RTSP zu MediaMTX / VLC etc.)
 # ---------------------------------------------------------------------------
 output:
+  # Highlight-Stream (nur Bewegungshervorhebung)
   rtsp_url: "rtsp://127.0.0.1:8554/larvacounter"
-
-# ---------------------------------------------------------------------------
-# 🧠 Roboflow Model (für spätere Einbindung)
-# ---------------------------------------------------------------------------
-model:
-  id: "workspace/project:1"   # Aktuelles Training / Dataset Version
 
 ###############################################################################
 # ✨ HIGHLIGHT OVERLAY SETTINGS
 ###############################################################################
-background_darken: 0.40   # Abdunklungsfaktor (1.0 = kein Abdunkeln, 0.5 = 50% Helligkeit)
+background_darken: 0.40   # Abdunklungsfaktor (1.0 = kein Abdunkeln)
 
 highlight:
-  # Blendfaktor der Hervorhebung (0 = kein Overlay, 1 = volle Stärke)
-  # Bereich: 0.0 – 1.0
-  gain: 0.04
-
-
-  # Weichzeichnen vor Bewegungserkennung (glättet Rauschen + Lichtflackern)
+  gain: 0.08              # Blendfaktor der Hervorhebung (0 = aus, 1 = stark)
   gauss:
-    # Kernelgröße (ungerade Zahl, größer = weicher)
-    # Bereich: 3,5,7,...31 (Empfehlung: 5–9)
-    ksize: 27
-
-    # Falls "auto": sigma wird passend zur Kernelgröße berechnet
-    # Bereich: "auto" oder float (z.B. 1.0–6.0)
-    sigma: "auto"
+    ksize: 21             # ungerade Zahl, größer = weicher
+    sigma: "auto"         # "auto" = passend zur Kernelgröße berechnet
 
 ###############################################################################
 # 🐛 MOTION DETECTION (EMA = Exponential Moving Average)
 ###############################################################################
 motion:
-  method: "ema"            # aktuell nur "ema", später: background-model
-
-  # Glättet zeitlich / reduziert Frame-Wobble
-  # kleiner = träger (weniger Flackern), größer = empfindlicher
-  # Bereich: 0.005 – 0.20  (BSF optimal: 0.01 – 0.05)
-  ema_alpha: 0.005
-
-  # Bewegungsschwelle pro Pixel (niedriger = empfindlicher)
-  # Bereich: 5 – 200  (BSF optimal: 50 – 120)
-  threshold: 50
+  method: "ema"
+  ema_alpha: 0.05        # kleiner = träger
+  threshold: 0.5         # Bewegungsschwelle pro Pixel
 
 ###############################################################################
 # 🧫 REGION & GROWTH FILTER
-# Größere zusammenhängende Larvenbewegungen erkennen, Reflexionen filtern
 ###############################################################################
 region:
-  # Mindestgröße eines Bewegungsclusters (Pixel)
-  # Bereich: 10 – 300 (BSF optimal: 50–150)
-  min_pixels: 60
-
-  # Wie viele Iterationen der Maske wachsen dürfen (Fang Larvenkörper)
-  # Bereich: 0 – 5
+  min_pixels: 100
   grow_iters: 2
-
-  # Kante-Schwelle (Sobel) für mask growth
-  # niedriger = wächst mehr, höher = stoppt an Kanten
-  # Bereich: 5 – 60 (BSF optimal: 15–30)
-  edge_threshold: 20
-
-  # Optional: grauwert-Ähnlichkeit beim Wachstum prüfen (0 = aus)
-  # Bereich: 0 – 40 (BSF optimal: 0–15)
+  edge_threshold: 50
   gray_delta: 0
 
 ###############################################################################
 # ⚙️ RUNTIME SETTINGS
 ###############################################################################
 runtime:
-  # FPS Limit des Ausgabe-Streams
-  # 0 = automatisch Kamera FPS
-  fps: 0
+  fps: 5                  # 0 = Quelle übernehmen
+  open_timeout_ms: 8000   # Kameratimeout beim Öffnen
 
-  # Timeout fürs Öffnen des Kamera-Streams (ms)
-  # Bereich: 2000 – 20000 ms
-  open_timeout_ms: 8000
+###############################################################################
+# 🧠 ROBOFLOW INFERENCE (lokal)
+# - api_key wird aus .env via ${ROBOFLOW_API_KEY:-} aufgelöst
+# - conf_thresh hier wirkt für inference.py (run_rtsp / _infer_once)
+###############################################################################
+inference:
+  host: "http://127.0.0.1:9001"
+  api_key: "${ROBOFLOW_API_KEY:-}"   # aus config/.env
+  timeout_sec: 10
+  jpeg_quality: 100
+  max_fps: 3
+  class_filter: []
+  conf_thresh: 0.35
+  # optionaler lokaler Cache für Model-/Dateidownloads durch inference.py
+  cache_dir: "/home/manager/.cache/roboflow-counter"
+
+###############################################################################
+# 🎯 TRACKER (Roboflow Inference + IoU-Matching + NVENC-Overlay)
+# - nutzt Predictor → versucht zuerst roboflow_counter.stream.inference (Model auto)
+#   und fällt sonst auf HTTP (host oben) zurück
+###############################################################################
+tracker:
+  enabled: true
+
+  # Quelle ist der Highlight-Stream
+  source_rtsp: "rtsps://192.168.1.1:7441/ChVL5N4cBje3fRy7?enableSrtp"
+
+  # Overlay-Output (mit Boxen/IDs) → MediaMTX paths:* müssen publishbar sein
+  overlay_rtsp: "rtsp://127.0.0.1:8554/larvacounter_tracks"
+
+  # Inference-Quelle (nur falls HTTP-Fallback nötig)
+  infer_host: "http://127.0.0.1:9001"
+
+  # Modell (ohne Workspace-Prefix!)
+  model_id: "dot_counting-plslb/35"
+
+  # Key-Resolution aus .env (wird vom Code via _resolve_api_key sauber gezogen)
+  api_key: "${ROBOFLOW_API_KEY:-}"
+
+  # Detection/Tracking-Parameter
+  class_filter: []        # nichts filtern
+  conf_thresh: 0.05       # ggf. zum Testen 0.20 setzen
+  iou_match_thresh: 0.5
+  max_age: 20
+  min_hits: 20
+  target_fps: 9
+
+  # Optional: Overlays als JPEG mit Rotation (für Debug)
+  export:
+    overlay_jpeg: false
+    overlay_dir: "/home/manager/projects/roboflow-counter/export/tracker"
+    overlay_every_n: 10
+
+  # --------------------------------------------
+  # 🧮 METRICS / Glättung & Stdout
+  # --------------------------------------------
+  metrics:
+    # Metriken im Stdout des Trackers (JSON, alle X Sekunden)
+    stdout_json: true
+    interval_sec: 9      # Wie oft JSON-Metriken im Log ausgegeben werden
+    smooth_sec: 9        # Fensterlänge in Sekunden für Median/Mean + HUD
+
+###############################################################################
+# ⚖️ OHAUS WAAGE / PRINT-BRIDGE
+# - konfiguriert die Ohaus-Integration (Waage → Telegraf/Influx + Overlay + Anzeige-Pi)
+###############################################################################
+ohaus:
+  # 🔌 Waage (TCP-Anschluss der Ohaus Ranger)
+  scale_host: 10.10.150.215
+  scale_port: 9761
+
+  # 📡 Telegraf socket_listener (siehe /etc/telegraf/telegraf.d/zzz_minimal.conf)
+  telegraf_host: 127.0.0.1
+  telegraf_port: 8094
+
+  # 📊 Tracker-Status (wird von tracker.py geschrieben, Tracks pro Frame/Fenster)
+  tracker_status_json: "/home/manager/projects/roboflow-counter/export/tracker/status.json"
+
+  # 🎨 Overlay-JSON für highlight.py (Gewicht, Tracks, Larven/g)
+  overlay_json: "/home/manager/projects/roboflow-counter/export/ohaus_overlay.json"
+  overlay_duration_sec: 20   # Sekunden, wie lange highlight.py das Overlay anzeigt
+  db_delay_sec: 20   #Wert wir erst nach 20 Sekunden nanch dem Print Befehl in die datenbank geschrieben
+  # 🖥️ Anzeige-Pi (zeigt 30s lang den Tracker-Stream, dann zurück zu Grafana)
+  display_pi_host: 10.10.150.252
+  display_pi_user: "manager"
+  display_pi_cmd: "sudo /usr/local/bin/show_tracker_30s.sh"
+
+  # 📬 Lokaler Trigger-Server für Remote-PRINT (nutzt bestehende Waagen-Verbindung)
+  trigger_host: 127.0.0.1
+  trigger_port: 9102
+
+  # 🧾 Influx-Measurement & Tags
+  measurement: "ohaus_waage"
+  tag_facility: "larvacounter"
+  tag_host: "roboflow"
+  ohaus_overlay_json: "/home/manager/projects/roboflow-counter/export/ohaus_overlay.json"  
+  #  Zielwerte pro Batch und Teilgaben Larve  
+  target_larvae_total: 110000   # Ziel: 110.000 Larven
+  num_portions: 2               # z.B. 2 Teilgaben (Kippungen)

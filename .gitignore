@@ -36,3 +36,16 @@ download_onnx.py
 logs/
 tools/
 *.bak
+# Laufzeitdaten / Export
+export/
+
+# Config-Backups
+config/config.yml.bak.*
+
+# Highlight-Backups / Schnipsel
+src/roboflow_counter/stream/highlight.py.bak.*
+src/roboflow_counter/stream/highlight.py.save
+src/roboflow_counter/stream/highlight_fix_snippet.txt
+
+# Testskripte (optional hier ignorieren)
+test_trigger_print.py
